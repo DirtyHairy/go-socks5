@@ -70,7 +70,7 @@ func TestParseMappingsBad(t *testing.T) {
 func TestMapsUnspecificPort(t *testing.T) {
 	mappings, _ := MappingsFromSpecs([]string{"1.2.3.4:10.11.12.13", "4.5.6.7:23:10.11.12.14:48"})
 
-	mapped, mappingApplied := mappings.Map(AddrSpec{
+	mapped, mappingApplied := mappings.Apply(AddrSpec{
 		IP:   net.IPv4(1, 2, 3, 4),
 		Port: 66,
 	})
@@ -85,7 +85,7 @@ func TestMapsUnspecificPort(t *testing.T) {
 func TestMapsSpecificPort(t *testing.T) {
 	mappings, _ := MappingsFromSpecs([]string{"1.2.3.4:10.11.12.13", "4.5.6.7:23:10.11.12.14:48"})
 
-	mapped, mappingApplied := mappings.Map(AddrSpec{
+	mapped, mappingApplied := mappings.Apply(AddrSpec{
 		IP:   net.IPv4(4, 5, 6, 7),
 		Port: 23,
 	})
