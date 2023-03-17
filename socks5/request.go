@@ -3,6 +3,7 @@ package socks5
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -37,7 +38,7 @@ var (
 
 // AddressRewriter is used to rewrite a destination transparently
 type AddressRewriter interface {
-	Rewrite(ctx context.Context, request *Request) (context.Context, *AddrSpec)
+	Rewrite(ctx context.Context, request *Request, logger *log.Logger) (context.Context, *AddrSpec)
 }
 
 // AddrSpec is used to return the target AddrSpec
@@ -48,7 +49,7 @@ type AddrSpec struct {
 	Port int
 }
 
-func (a *AddrSpec) String() string {
+func (a AddrSpec) String() string {
 	if a.FQDN != "" {
 		return fmt.Sprintf("%s (%s):%d", a.FQDN, a.IP, a.Port)
 	}
@@ -117,10 +118,13 @@ func NewRequest(bufConn io.Reader) (*Request, error) {
 
 // handleRequest is used for request processing after authentication
 func (s *Server) handleRequest(req *Request, conn conn) error {
+	s.config.Logger.Printf("handling connection for %v from %v", req.DestAddr, conn.RemoteAddr())
+
 	ctx := context.Background()
 
 	// Resolve the address if we have a FQDN
-	dest := req.DestAddr
+	dest := *req.DestAddr
+
 	if dest.FQDN != "" {
 		ctx_, addr, err := s.config.Resolver.Resolve(ctx, dest.FQDN)
 		if err != nil {
@@ -136,7 +140,7 @@ func (s *Server) handleRequest(req *Request, conn conn) error {
 	// Apply any address rewrites
 	req.realDestAddr = req.DestAddr
 	if s.config.Rewriter != nil {
-		ctx, req.realDestAddr = s.config.Rewriter.Rewrite(ctx, req)
+		ctx, req.realDestAddr = s.config.Rewriter.Rewrite(ctx, req, s.config.Logger)
 	}
 
 	// Switch on the command

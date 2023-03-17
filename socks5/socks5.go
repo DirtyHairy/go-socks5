@@ -119,6 +119,7 @@ func (s *Server) Serve(l net.Listener) error {
 
 // ServeConn is used to serve a single connection.
 func (s *Server) ServeConn(conn net.Conn) error {
+	s.config.Logger.Printf("incoming connection from %v", conn.RemoteAddr())
 	defer conn.Close()
 	bufConn := bufio.NewReader(conn)
 
