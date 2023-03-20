@@ -37,10 +37,14 @@ Valid parameters:
 
 func main() {
 	var specs SpecList
+	port := 9998
+	address := "localhost"
 	var err error
 
 	flag.Usage = Usage
 	flag.Var(&specs, "m", "specify a mapping")
+	flag.IntVar(&port, "p", port, "proxy port")
+	flag.StringVar(&address, "l", address, "proxy address")
 	flag.Parse()
 
 	mappings, err := socks5.MappingsFromSpecs(specs)
@@ -56,10 +60,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	listen := fmt.Sprintf("%v:%v", address, port)
 	resultChannel := make(chan int, 1)
 
 	go func() {
-		if err := server.ListenAndServe("tcp", "127.0.0.1:9998"); err != nil {
+		if err := server.ListenAndServe("tcp", listen); err != nil {
 			fmt.Printf("ERROR: unable to start server: %v\n", err)
 			os.Exit(1)
 
@@ -69,7 +74,7 @@ func main() {
 		resultChannel <- 0
 	}()
 
-	fmt.Println("server listening...")
+	fmt.Printf("server listening on %v\n", listen)
 
 	<-resultChannel
 }
